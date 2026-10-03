@@ -2,6 +2,7 @@
 #include "DonorDashboard.h"
 #include "RecipientDashboard.h"
 #include "AdminDashboard.h"
+#include "RegisterWindow.h"
 
 #include <QComboBox>
 
@@ -45,12 +46,12 @@ LoginWindow::LoginWindow()
 
     loginButton =
         new QPushButton("Login");
-
+    registerButton = new QPushButton("Create Account");
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLogin);
+    connect(registerButton,&QPushButton::clicked,this,&LoginWindow::openRegisterWindow);
 
     messageLabel =
         new QLabel("");
-
     QVBoxLayout *layout =
         new QVBoxLayout();
 
@@ -63,6 +64,7 @@ LoginWindow::LoginWindow()
     layout->addWidget(roleLabel);
     layout->addWidget(roleInput);
     layout->addWidget(loginButton);
+    layout->addWidget(registerButton);
     layout->addWidget(messageLabel);
 
     setLayout(layout);
@@ -110,4 +112,11 @@ void LoginWindow::handleLogin()
         messageLabel->setText(
             "Invalid Email or Password!");
     }
+}
+void LoginWindow::openRegisterWindow()
+{
+    RegisterWindow* window =
+        new RegisterWindow();
+
+    window->show();
 }

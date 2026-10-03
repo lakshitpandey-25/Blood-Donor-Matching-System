@@ -49,6 +49,9 @@ add_executable(BloodDonorMatchingSystem
 
     ui/AdminDashboard.cpp
     ui/AdminDashboard.h
+
+    ui/RegisterWindow.cpp
+    ui/RegisterWindow.h
 )
 
 target_include_directories(BloodDonorMatchingSystem PRIVATE

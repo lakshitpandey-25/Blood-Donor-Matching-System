@@ -17,9 +17,11 @@ private:
     QComboBox* roleInput;
     QLineEdit* emailInput;
     QLineEdit* passwordInput;
+    QPushButton* registerButton;
     QPushButton* loginButton;
     QLabel* messageLabel;
     void handleLogin();
+    void openRegisterWindow();
 };
 
 #endif
