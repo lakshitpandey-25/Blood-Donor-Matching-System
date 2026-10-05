@@ -35,6 +35,12 @@ add_executable(BloodDonorMatchingSystem
     modules/authentication/LoginManager.cpp
     modules/authentication/LoginManager.h
 
+    modules/database/DatabaseManager.cpp
+    modules/database/DatabaseManager.h
+
+    modules/admin/AdminManager.cpp
+    modules/admin/AdminManager.h
+
     ui/LoginWindow.cpp
     ui/LoginWindow.h
 
