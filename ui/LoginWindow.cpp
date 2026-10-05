@@ -48,7 +48,7 @@ LoginWindow::LoginWindow()
         new QPushButton("Login");
     registerButton = new QPushButton("Create Account");
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLogin);
-    connect(registerButton,&QPushButton::clicked,this,&LoginWindow::openRegisterWindow);
+    connect(registerButton, &QPushButton::clicked, this, &LoginWindow::openRegisterWindow);
 
     messageLabel =
         new QLabel("");
@@ -74,48 +74,58 @@ void LoginWindow::handleLogin()
 {
     LoginManager loginManager;
 
-    QString role = roleInput->currentText();
+    QString email = emailInput->text();
+    QString password = passwordInput->text();
 
-    bool result = loginManager.validateLogin(
-        emailInput->text(),
-        passwordInput->text());
+    QString actualRole =
+        loginManager.getUserRole(email, password);
 
-    if (result)
-    {
-        messageLabel->setText(
-            "Login Successful as " + role);
-
-        if (role == "Donor")
-        {
-            DonorDashboard *dashboard =
-                new DonorDashboard();
-
-            dashboard->show();
-        }
-        else if (role == "Recipient")
-        {
-            RecipientDashboard *dashboard =
-                new RecipientDashboard();
-
-            dashboard->show();
-        }
-        else if (role == "Admin")
-        {
-            AdminDashboard *dashboard =
-                new AdminDashboard();
-
-            dashboard->show();
-        }
-    }
-    else
+    if (actualRole.isEmpty())
     {
         messageLabel->setText(
             "Invalid Email or Password!");
+        return;
+    }
+
+    QString selectedRole = roleInput->currentText();
+
+    if (selectedRole != actualRole)
+    {
+        messageLabel->setText(
+            "Incorrect role selected!");
+        return;
+    }
+
+    messageLabel->setText(
+        "Login Successful as " + actualRole);
+
+    if (actualRole == "Donor")
+    {
+        int userId = loginManager.getUserId(email, password);
+
+        DonorDashboard *dashboard = new DonorDashboard(userId);
+
+        dashboard->show();
+    }
+    else if (actualRole == "Recipient")
+    {
+        int userId = loginManager.getUserId(email, password);
+
+        RecipientDashboard *dashboard = new RecipientDashboard(userId);
+
+        dashboard->show();
+    }
+    else if (actualRole == "Admin")
+    {
+        AdminDashboard *dashboard =
+            new AdminDashboard();
+
+        dashboard->show();
     }
 }
 void LoginWindow::openRegisterWindow()
 {
-    RegisterWindow* window =
+    RegisterWindow *window =
         new RegisterWindow();
 
     window->show();

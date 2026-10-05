@@ -6,7 +6,10 @@
 class RecipientDashboard : public QWidget
 {
 public:
-    RecipientDashboard();
+    RecipientDashboard(int userId);
+
+private:
+    int userId;
 };
 
 #endif

@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include "../database/DatabaseManager.h"
+
 class LoginManager
 {
 public:
@@ -10,6 +12,12 @@ public:
 
     bool validateLogin(const QString& email,
                        const QString& password) const;
+
+    QString getUserRole(const QString& email,
+                        const QString& password) const;
+
+    int getUserId(const QString& email,
+                  const QString& password) const;
 };
 
 #endif

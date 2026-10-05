@@ -6,7 +6,10 @@
 class DonorDashboard : public QWidget
 {
 public:
-    DonorDashboard();
+    DonorDashboard(int userId);
+
+private:
+    int userId;
 };
 
 #endif
