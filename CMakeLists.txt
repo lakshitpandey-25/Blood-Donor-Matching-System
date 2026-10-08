@@ -25,6 +25,8 @@ add_executable(BloodDonorMatchingSystem
     models/Recipient.cpp
     models/Recipient.h
 
+    models/BloodRequest.cpp
+    models/BloodRequest.h
 
     models/Admin.cpp
     models/Admin.h
@@ -41,14 +43,14 @@ add_executable(BloodDonorMatchingSystem
     modules/admin/AdminManager.cpp
     modules/admin/AdminManager.h
 
+    modules/matching/MatchingSystem.cpp
+    modules/matching/MatchingSystem.h
+
     ui/LoginWindow.cpp
     ui/LoginWindow.h
 
     ui/DonorDashboard.cpp
     ui/DonorDashboard.h
-
-    ui/RecipientDashboard.cpp
-    ui/RecipientDashboard.h
 
     ui/RecipientDashboard.cpp
     ui/RecipientDashboard.h
@@ -65,7 +67,6 @@ target_include_directories(BloodDonorMatchingSystem PRIVATE
 )
 
 target_link_libraries(BloodDonorMatchingSystem
-
     Qt6::Widgets
     Qt6::Sql
 )
