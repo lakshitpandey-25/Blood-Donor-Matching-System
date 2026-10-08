@@ -16,33 +16,45 @@ private:
     bool ready;
 
 public:
+    // ---------- Constructor ----------
     AdminManager();
 
+    // ---------- Database Status ----------
     bool isReady() const;
     QString getLastError() const;
 
-    // Admin login check (used with the Admin option in LoginWindow)
-    bool verifyAdmin(const QString& email,
-                     const QString& password) const;
+    // ---------- Admin Authentication ----------
+    bool verifyAdmin(
+        const QString& email,
+        const QString& password
+    ) const;
 
-    // Viewing records
+    // ---------- View Records ----------
     QList<Donor> getAllDonors() const;
     QList<Recipient> getAllRecipients() const;
     QList<QVariantMap> getAllBloodRequests() const;
 
-    // Managing users
+    // ---------- User Management ----------
     bool deleteUser(int userId);
-    bool setDonorEligibility(int userId, bool eligible);
 
-    // Managing blood requests
-    bool updateRequestStatus(int requestId, const QString& status);
+    bool setDonorEligibility(
+        int userId,
+        bool eligible
+    );
+
+    // ---------- Blood Request Management ----------
+    bool updateRequestStatus(
+        int requestId,
+        const QString& status
+    );
+
     bool deleteRequest(int requestId);
 
-    // Dashboard statistics
+    // ---------- Dashboard Statistics ----------
     int getTotalDonors() const;
     int getTotalRecipients() const;
     int getTotalRequests() const;
     int getPendingRequests() const;
 };
 
-#endif
+#endif // ADMINMANAGER_H
