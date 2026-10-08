@@ -1,4 +1,4 @@
-#ifndef DONOR_H
+ #ifndef DONOR_H
 #define DONOR_H
 
 #include <QString>
@@ -6,44 +6,47 @@
 #include "User.h"
 #include "DonationHistory.h"
 
-class Donor : public User {
+class Donor : public User
+{
 private:
     QString bloodGroup;
     int age;
     QString gender;
     QString city;
-    QDate lastDonationDate;
+    QString lastDonationDate;   // format: yyyy-MM-dd
     bool eligible;
-    DonationHistory history;   // Composition
+    DonationHistory history;    // Composition
 
 public:
     Donor();
-    Donor(int userId, const QString &name, const QString &phone,
-          const QString &email, const QString &password,
-          const QString &bloodGroup, int age, const QString &gender,
-          const QString &city, const QDate &lastDonationDate);
+
+    Donor(int userId, QString name, QString phone,
+          QString email, QString password,
+          QString bloodGroup, int age,
+          QString gender, QString city,
+          QString lastDonationDate, bool eligible);
 
     QString getBloodGroup() const;
     int getAge() const;
     QString getGender() const;
     QString getCity() const;
-    QDate getLastDonationDate() const;
+    QString getLastDonationDate() const;
     bool isEligible() const;
     DonationHistory &getHistory();
 
-    void setBloodGroup(const QString &bloodGroup);
+    void setBloodGroup(QString bloodGroup);
     void setAge(int age);
-    void setGender(const QString &gender);
-    void setCity(const QString &city);
-    void setLastDonationDate(const QDate &date);
+    void setGender(QString gender);
+    void setCity(QString city);
+    void setLastDonationDate(QString date);
+    void setEligible(bool eligible);
 
     void updateEligibility();                 // 90-day cooldown
     void addDonation(const Donation &donation);
     bool exportToCsv(const QString &filePath) const;
 
-    // Polymorphism (overrides of User)
-    QString displayProfile() const override;
+    virtual QString displayProfile() const;
     QString getRole() const override;
 };
 
-#endif // DONOR_H
+#endif
