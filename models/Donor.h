@@ -1,10 +1,7 @@
- #ifndef DONOR_H
+#ifndef DONOR_H
 #define DONOR_H
 
-#include <QString>
-#include <QDate>
 #include "User.h"
-#include "DonationHistory.h"
 
 class Donor : public User
 {
@@ -13,9 +10,8 @@ private:
     int age;
     QString gender;
     QString city;
-    QString lastDonationDate;   // format: yyyy-MM-dd
+    QString lastDonationDate;
     bool eligible;
-    DonationHistory history;    // Composition
 
 public:
     Donor();
@@ -32,7 +28,6 @@ public:
     QString getCity() const;
     QString getLastDonationDate() const;
     bool isEligible() const;
-    DonationHistory &getHistory();
 
     void setBloodGroup(QString bloodGroup);
     void setAge(int age);
@@ -41,11 +36,6 @@ public:
     void setLastDonationDate(QString date);
     void setEligible(bool eligible);
 
-    void updateEligibility();                 // 90-day cooldown
-    void addDonation(const Donation &donation);
-    bool exportToCsv(const QString &filePath) const;
-
-    virtual QString displayProfile() const;
     QString getRole() const override;
 };
 
