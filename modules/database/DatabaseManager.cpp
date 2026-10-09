@@ -1,5 +1,5 @@
 #include "DatabaseManager.h"
-
+#include <QDebug>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QCryptographicHash>
@@ -9,7 +9,7 @@
 
 namespace
 {
-    Donor donorFromQuery(const QSqlQuery& query)
+    Donor donorFromQuery(const QSqlQuery &query)
     {
         return Donor(
             query.value(0).toInt(),
@@ -25,7 +25,7 @@ namespace
             query.value(10).toBool());
     }
 
-    Recipient recipientFromQuery(const QSqlQuery& query)
+    Recipient recipientFromQuery(const QSqlQuery &query)
     {
         return Recipient(
             query.value(0).toInt(),
@@ -37,7 +37,7 @@ namespace
             query.value(6).toString());
     }
 
-    Admin adminFromQuery(const QSqlQuery& query)
+    Admin adminFromQuery(const QSqlQuery &query)
     {
         return Admin(
             query.value(0).toInt(),
@@ -47,18 +47,18 @@ namespace
             query.value(4).toString());
     }
 
-    const char* DONOR_SELECT =
+    const char *DONOR_SELECT =
         "SELECT u.user_id, u.name, u.phone, u.email, u.password, "
         "d.blood_group, d.age, d.gender, d.city, "
         "d.last_donation_date, d.eligible "
         "FROM users u JOIN donors d ON u.user_id = d.user_id ";
 
-    const char* RECIPIENT_SELECT =
+    const char *RECIPIENT_SELECT =
         "SELECT u.user_id, u.name, u.phone, u.email, u.password, "
         "r.required_blood_group, r.city "
         "FROM users u JOIN recipients r ON u.user_id = r.user_id ";
 
-    const char* ADMIN_SELECT =
+    const char *ADMIN_SELECT =
         "SELECT user_id, name, phone, email, password "
         "FROM users WHERE role = 'Admin' ";
 }
@@ -73,7 +73,7 @@ QSqlDatabase DatabaseManager::database() const
     return QSqlDatabase::database(connectionName, false);
 }
 
-QString DatabaseManager::hashPassword(const QString& password) const
+QString DatabaseManager::hashPassword(const QString &password) const
 {
     QByteArray hash = QCryptographicHash::hash(
         password.toUtf8(),
@@ -185,7 +185,7 @@ bool DatabaseManager::createTables()
 
     QSqlQuery query(database());
 
-    for (const QString& statement : statements)
+    for (const QString &statement : statements)
     {
         if (!query.exec(statement))
         {
@@ -214,7 +214,7 @@ bool DatabaseManager::createDefaultAdmin()
 // Create
 // ---------------------------------------------------------------
 
-int DatabaseManager::insertUser(const User& user)
+int DatabaseManager::insertUser(const User &user)
 {
     QSqlQuery query(database());
 
@@ -236,7 +236,7 @@ int DatabaseManager::insertUser(const User& user)
     return query.lastInsertId().toInt();
 }
 
-int DatabaseManager::addDonor(const Donor& donor)
+int DatabaseManager::addDonor(const Donor &donor)
 {
     QSqlDatabase db = database();
 
@@ -285,7 +285,7 @@ int DatabaseManager::addDonor(const Donor& donor)
     return userId;
 }
 
-int DatabaseManager::addRecipient(const Recipient& recipient)
+int DatabaseManager::addRecipient(const Recipient &recipient)
 {
     QSqlDatabase db = database();
 
@@ -329,14 +329,14 @@ int DatabaseManager::addRecipient(const Recipient& recipient)
     return userId;
 }
 
-int DatabaseManager::addAdmin(const Admin& admin)
+int DatabaseManager::addAdmin(const Admin &admin)
 {
     return insertUser(admin);
 }
 
 int DatabaseManager::addBloodRequest(int recipientId,
-                                     const QString& bloodGroup,
-                                     const QString& city,
+                                     const QString &bloodGroup,
+                                     const QString &city,
                                      int units)
 {
     QSqlQuery query(database());
@@ -363,7 +363,7 @@ int DatabaseManager::addBloodRequest(int recipientId,
 // Read
 // ---------------------------------------------------------------
 
-bool DatabaseManager::emailExists(const QString& email) const
+bool DatabaseManager::emailExists(const QString &email) const
 {
     QSqlQuery query(database());
 
@@ -373,10 +373,10 @@ bool DatabaseManager::emailExists(const QString& email) const
     return query.exec() && query.next();
 }
 
-bool DatabaseManager::authenticateUser(const QString& email,
-                                       const QString& password,
-                                       QString& role,
-                                       int& userId) const
+bool DatabaseManager::authenticateUser(const QString &email,
+                                       const QString &password,
+                                       QString &role,
+                                       int &userId) const
 {
     QSqlQuery query(database());
 
@@ -466,7 +466,13 @@ QList<Donor> DatabaseManager::getAllDonors() const
     {
         while (query.next())
         {
-            donors.append(donorFromQuery(query));
+            Donor donor = donorFromQuery(query);
+
+            qDebug() << "Donor:" << donor.getName()
+                     << "ID:" << donor.getUserId()
+                     << "Eligible:" << donor.isEligible();
+
+            donors.append(donor);
         }
     }
     else
@@ -557,7 +563,7 @@ QList<QVariantMap> DatabaseManager::getAllBloodRequests() const
     return requests;
 }
 
-int DatabaseManager::countUsersByRole(const QString& role) const
+int DatabaseManager::countUsersByRole(const QString &role) const
 {
     QSqlQuery query(database());
 
@@ -572,7 +578,7 @@ int DatabaseManager::countUsersByRole(const QString& role) const
     return 0;
 }
 
-int DatabaseManager::countBloodRequests(const QString& status) const
+int DatabaseManager::countBloodRequests(const QString &status) const
 {
     QSqlQuery query(database());
 
@@ -598,7 +604,7 @@ int DatabaseManager::countBloodRequests(const QString& status) const
 // Update
 // ---------------------------------------------------------------
 
-bool DatabaseManager::updateUserInfo(const User& user)
+bool DatabaseManager::updateUserInfo(const User &user)
 {
     QSqlQuery query(database());
 
@@ -619,7 +625,7 @@ bool DatabaseManager::updateUserInfo(const User& user)
     return query.numRowsAffected() > 0;
 }
 
-bool DatabaseManager::updateDonor(const Donor& donor)
+bool DatabaseManager::updateDonor(const Donor &donor)
 {
     QSqlDatabase db = database();
 
@@ -659,7 +665,7 @@ bool DatabaseManager::updateDonor(const Donor& donor)
     return db.commit();
 }
 
-bool DatabaseManager::updateRecipient(const Recipient& recipient)
+bool DatabaseManager::updateRecipient(const Recipient &recipient)
 {
     QSqlDatabase db = database();
 
@@ -694,12 +700,12 @@ bool DatabaseManager::updateRecipient(const Recipient& recipient)
     return db.commit();
 }
 
-bool DatabaseManager::updateAdmin(const Admin& admin)
+bool DatabaseManager::updateAdmin(const Admin &admin)
 {
     return updateUserInfo(admin);
 }
 
-bool DatabaseManager::updatePassword(int userId, const QString& newPassword)
+bool DatabaseManager::updatePassword(int userId, const QString &newPassword)
 {
     QSqlQuery query(database());
 
@@ -734,7 +740,7 @@ bool DatabaseManager::updateDonorEligibility(int userId, bool eligible)
 }
 
 bool DatabaseManager::updateBloodRequestStatus(int requestId,
-                                               const QString& status)
+                                               const QString &status)
 {
     QSqlQuery query(database());
 

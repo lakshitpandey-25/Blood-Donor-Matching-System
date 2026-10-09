@@ -1,3 +1,4 @@
+
 #ifndef RECIPIENTDASHBOARD_H
 #define RECIPIENTDASHBOARD_H
 
@@ -6,7 +7,11 @@
 class RecipientDashboard : public QWidget
 {
 public:
-    RecipientDashboard();
+    explicit RecipientDashboard(int recipientId,
+                                QWidget* parent = nullptr);
+
+private:
+    int recipientId;
 };
 
 #endif

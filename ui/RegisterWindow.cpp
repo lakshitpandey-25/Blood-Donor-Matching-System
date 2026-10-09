@@ -1,6 +1,8 @@
 #include "RegisterWindow.h"
 #include "../modules/authentication/AuthenticationManager.h"
-
+#include "../modules/database/DatabaseManager.h"
+#include "../models/Donor.h"
+#include "../models/Recipient.h"
 #include "../models/User.h"
 
 #include <QLabel>
@@ -91,22 +93,58 @@ RegisterWindow::RegisterWindow()
 }
 void RegisterWindow::handleRegistration()
 {
-    QString name = nameInput->text();
-    QString phone = phoneInput->text();
-    QString email = emailInput->text();
+    QString name = nameInput->text().trimmed();
+    QString phone = phoneInput->text().trimmed();
+    QString email = emailInput->text().trimmed();
     QString password = passwordInput->text();
+    QString role = roleInput->currentText();
 
-    AuthenticationManager authManager;
-
-    if (name.isEmpty() ||
-        email.isEmpty() ||
-        password.isEmpty())
+    if (name.isEmpty() || phone.isEmpty() ||
+        email.isEmpty() || password.isEmpty())
     {
-        messageLabel->setText(
-            "Please fill Name, Email and Password.");
+        messageLabel->setText("Please fill all fields.");
         return;
     }
 
-    messageLabel->setText(
-        "Registration details are valid!");
+    DatabaseManager dbManager;
+
+    if (!dbManager.openDatabase() ||
+        !dbManager.createTables())
+    {
+        messageLabel->setText(
+            "Database error: " + dbManager.getLastError());
+        return;
+    }
+
+    int userId = -1;
+
+    if (role == "Donor")
+    {
+        Donor donor(
+            0, name, phone, email, password,
+            "O+", 18, "Not specified", "Dehradun",
+            "", true);
+
+        userId = dbManager.addDonor(donor);
+    }
+    else
+    {
+        Recipient recipient(
+            0, name, phone, email, password,
+            "O+", "");
+
+        userId = dbManager.addRecipient(recipient);
+    }
+
+    if (userId != -1)
+    {
+        messageLabel->setText(
+            "Account created successfully!");
+    }
+    else
+    {
+        messageLabel->setText(
+            "Registration failed: " +
+            dbManager.getLastError());
+    }
 }

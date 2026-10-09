@@ -1,5 +1,4 @@
 #include "MatchingSystem.h"
-
 MatchingSystem::MatchingSystem()
 {
 }
@@ -184,7 +183,7 @@ bool MatchingSystem::passed90DayCooldown(
     // Invalid date is not treated as a recent donation.
     if (!lastDonationDate.isValid())
     {
-        return true;
+        return false;
     }
 
     QDate today = QDate::currentDate();

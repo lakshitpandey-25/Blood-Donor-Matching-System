@@ -1,3 +1,4 @@
+
 #ifndef LOGINMANAGER_H
 #define LOGINMANAGER_H
 
@@ -9,7 +10,9 @@ public:
     LoginManager();
 
     bool validateLogin(const QString& email,
-                       const QString& password) const;
+                       const QString& password,
+                       QString& role,
+                       int& userId) const;
 };
 
 #endif

@@ -70,47 +70,57 @@ LoginWindow::LoginWindow()
     setLayout(layout);
 }
 
+
 void LoginWindow::handleLogin()
 {
     LoginManager loginManager;
 
-    QString role = roleInput->currentText();
+    QString role;
+    int userId = -1;
 
     bool result = loginManager.validateLogin(
         emailInput->text(),
-        passwordInput->text());
+        passwordInput->text(),
+        role,
+        userId);
 
-    if (result)
+    if (!result)
     {
         messageLabel->setText(
-            "Login Successful as " + role);
+            "Invalid email or password, or database error!");
+        return;
+    }
 
-        if (role == "Donor")
-        {
-            DonorDashboard *dashboard =
-                new DonorDashboard();
+    // Check that the selected role matches the database role.
+    if (role != roleInput->currentText())
+    {
+        messageLabel->setText(
+            "Please select your registered role.");
+        return;
+    }
 
-            dashboard->show();
-        }
-        else if (role == "Recipient")
-        {
-            RecipientDashboard *dashboard =
-                new RecipientDashboard();
+    messageLabel->setText("Login successful as " + role);
 
-            dashboard->show();
-        }
-        else if (role == "Admin")
-        {
-            AdminDashboard *dashboard =
-                new AdminDashboard();
+    if (role == "Donor")
+    {
+        DonorDashboard* dashboard = new DonorDashboard();
+        dashboard->show();
+    }
+    else if (role == "Recipient")
+    {
+        RecipientDashboard* dashboard =
+            new RecipientDashboard(userId);
 
-            dashboard->show();
-        }
+        dashboard->show();
+    }
+    else if (role == "Admin")
+    {
+        AdminDashboard* dashboard = new AdminDashboard();
+        dashboard->show();
     }
     else
     {
-        messageLabel->setText(
-            "Invalid Email or Password!");
+        messageLabel->setText("Unknown user role.");
     }
 }
 void LoginWindow::openRegisterWindow()
