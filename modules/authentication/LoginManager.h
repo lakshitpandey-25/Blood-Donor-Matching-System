@@ -9,7 +9,8 @@ public:
     LoginManager();
 
     bool validateLogin(const QString& email,
-                       const QString& password) const;
+                       const QString& password,
+                       const QString& selectedRole) const;
 };
 
 #endif

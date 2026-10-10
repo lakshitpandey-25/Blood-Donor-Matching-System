@@ -78,7 +78,8 @@ void LoginWindow::handleLogin()
 
     bool result = loginManager.validateLogin(
         emailInput->text(),
-        passwordInput->text());
+        passwordInput->text(),
+        role);
 
     if (result)
     {
