@@ -10,6 +10,7 @@
 #include "../../models/Donor.h"
 #include "../../models/Recipient.h"
 #include "../../models/Admin.h"
+#include "../../models/Donation.h"   // NEW
 
 class DatabaseManager
 {
@@ -44,6 +45,10 @@ public:
     int addBloodRequest(int recipientId, const QString& bloodGroup,
                         const QString& city, int units);
 
+    // Validates age, date and 90-day cooldown, then saves the donation.
+    // Returns the new donationId, or -1 on failure (reason in error).
+    int addDonation(Donation& donation, QString& error);   // NEW
+
     // ---------- Read ----------
     bool emailExists(const QString& email) const;
 
@@ -65,6 +70,8 @@ public:
     // Keys: requestId, recipientId, recipientName, bloodGroup,
     //       city, units, status, createdAt
     QList<QVariantMap> getAllBloodRequests() const;
+
+    QList<Donation> getDonationsByDonor(int donorId) const;   // NEW
 
     int countUsersByRole(const QString& role) const;
     int countBloodRequests(const QString& status = QString()) const;

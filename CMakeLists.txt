@@ -21,6 +21,18 @@ add_executable(BloodDonorMatchingSystem
 
     models/Donor.cpp
     models/Donor.h
+    
+    models/Donation.cpp
+    models/Donation.h
+
+    models/DonationHistory.cpp
+    models/DonationHistory.h
+    
+    models/Donation.cpp
+    models/Donation.h
+
+    models/DonationHistory.cpp
+    models/DonationHistory.h
 
     models/Recipient.cpp
     models/Recipient.h
@@ -35,6 +47,7 @@ add_executable(BloodDonorMatchingSystem
     modules/authentication/LoginManager.cpp
     modules/authentication/LoginManager.h
 
+
     modules/database/DatabaseManager.cpp
     modules/database/DatabaseManager.h
 
@@ -46,9 +59,6 @@ add_executable(BloodDonorMatchingSystem
 
     ui/DonorDashboard.cpp
     ui/DonorDashboard.h
-
-    ui/RecipientDashboard.cpp
-    ui/RecipientDashboard.h
 
     ui/RecipientDashboard.cpp
     ui/RecipientDashboard.h
