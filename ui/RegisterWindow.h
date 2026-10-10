@@ -18,6 +18,11 @@ private:
     QLineEdit* phoneInput;
     QLineEdit* emailInput;
     QLineEdit* passwordInput;
+    QLineEdit* bloodGroupInput;
+    QLineEdit* ageInput;
+    QLineEdit* genderInput;
+    QLineEdit* cityInput;
+    QLineEdit* lastDonationDateInput;
 
     QComboBox* roleInput;
 

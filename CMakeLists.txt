@@ -9,8 +9,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(Qt6_DIR "C:/QT/6.11.2/mingw_64/lib/cmake/Qt6")
-
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
 
 add_executable(BloodDonorMatchingSystem
@@ -41,14 +39,14 @@ add_executable(BloodDonorMatchingSystem
     modules/admin/AdminManager.cpp
     modules/admin/AdminManager.h
 
+    modules/reports/ReportManager.cpp
+    modules/reports/ReportManager.h
+
     ui/LoginWindow.cpp
     ui/LoginWindow.h
 
     ui/DonorDashboard.cpp
     ui/DonorDashboard.h
-
-    ui/RecipientDashboard.cpp
-    ui/RecipientDashboard.h
 
     ui/RecipientDashboard.cpp
     ui/RecipientDashboard.h

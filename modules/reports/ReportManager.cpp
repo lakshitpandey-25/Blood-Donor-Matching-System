@@ -12,6 +12,7 @@
 
 ReportManager::ReportManager()
 {
+    database.openDatabase();
     QString appDataPath =
         QStandardPaths::writableLocation(
             QStandardPaths::AppDataLocation);
