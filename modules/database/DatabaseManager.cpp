@@ -6,6 +6,7 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QStringList>
+#include <QDate>
 
 namespace
 {
@@ -164,6 +165,15 @@ bool DatabaseManager::createTables()
                   "last_donation_date TEXT, "
                   "eligible INTEGER NOT NULL DEFAULT 1, "
                   "FOREIGN KEY (user_id) REFERENCES users(user_id) "
+                  "ON DELETE CASCADE)";
+
+    statements << "CREATE TABLE IF NOT EXISTS donations ("
+                  "donation_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                  "donor_id INTEGER NOT NULL, "
+                  "donation_date TEXT NOT NULL, "
+                  "hospital TEXT, "
+                  "blood_group TEXT, "
+                  "FOREIGN KEY (donor_id) REFERENCES donors(user_id) "
                   "ON DELETE CASCADE)";
 
     statements << "CREATE TABLE IF NOT EXISTS recipients ("
@@ -669,7 +679,6 @@ int DatabaseManager::countBloodRequests(
 
     return 0;
 }
-
 // ---------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------
@@ -905,4 +914,135 @@ bool DatabaseManager::deleteBloodRequest(
     }
 
     return query.numRowsAffected() > 0;
+}
+
+// ---------------------------------------------------------------
+// Donations
+// ---------------------------------------------------------------
+
+int DatabaseManager::addDonation(Donation &donation, QString &error)
+{
+    QSqlDatabase db = database();
+    int donorId = donation.getDonorId();
+    QSqlQuery query(db);
+
+    query.prepare("SELECT age, blood_group, last_donation_date "
+                  "FROM donors WHERE user_id = ?");
+    query.addBindValue(donorId);
+    if (!query.exec() || !query.next())
+    {
+        error = "Donor not found.";
+        return -1;
+    }
+
+    int age = query.value(0).toInt();
+    QString donorGroup = query.value(1).toString();
+    QDate lastDate = QDate::fromString(query.value(2).toString(), Qt::ISODate);
+
+    if (age < 18)
+    {
+        error = "Donor must be at least 18 years old.";
+        return -1;
+    }
+
+    QDate date = donation.getDonationDate();
+    if (!date.isValid())
+    {
+        error = "Donation date is not valid.";
+        return -1;
+    }
+    if (date > QDate::currentDate())
+    {
+        error = "Donation date cannot be in the future.";
+        return -1;
+    }
+
+    query.prepare("SELECT MAX(donation_date) FROM donations WHERE donor_id = ?");
+    query.addBindValue(donorId);
+    if (query.exec() && query.next() && !query.value(0).isNull())
+    {
+        QDate recorded = QDate::fromString(query.value(0).toString(), Qt::ISODate);
+        if (recorded.isValid() && (!lastDate.isValid() || recorded > lastDate))
+            lastDate = recorded;
+    }
+
+    if (lastDate.isValid() && lastDate.daysTo(date) < 90)
+    {
+        error = QString("Next donation is allowed after %1.")
+                    .arg(lastDate.addDays(90).toString(Qt::ISODate));
+        return -1;
+    }
+
+    if (donation.getBloodGroup().isEmpty())
+        donation.setBloodGroup(donorGroup);
+
+    if (!db.transaction())
+    {
+        error = db.lastError().text();
+        return -1;
+    }
+
+    query.prepare("INSERT INTO donations "
+                  "(donor_id, donation_date, hospital, blood_group) "
+                  "VALUES (?, ?, ?, ?)");
+    query.addBindValue(donorId);
+    query.addBindValue(date.toString(Qt::ISODate));
+    query.addBindValue(donation.getHospital());
+    query.addBindValue(donation.getBloodGroup());
+    if (!query.exec())
+    {
+        error = query.lastError().text();
+        db.rollback();
+        return -1;
+    }
+    int newId = query.lastInsertId().toInt();
+
+    query.prepare("UPDATE donors SET last_donation_date = ?, eligible = 0 "
+                  "WHERE user_id = ?");
+    query.addBindValue(date.toString(Qt::ISODate));
+    query.addBindValue(donorId);
+    if (!query.exec())
+    {
+        error = query.lastError().text();
+        db.rollback();
+        return -1;
+    }
+
+    if (!db.commit())
+    {
+        error = db.lastError().text();
+        db.rollback();
+        return -1;
+    }
+
+    donation.setDonationId(newId);
+    return newId;
+}
+
+QList<Donation> DatabaseManager::getDonationsByDonor(int donorId) const
+{
+    QList<Donation> donations;
+    QSqlQuery query(database());
+
+    query.prepare("SELECT donation_id, donor_id, donation_date, hospital, blood_group "
+                  "FROM donations WHERE donor_id = ? "
+                  "ORDER BY donation_date DESC, donation_id DESC");
+    query.addBindValue(donorId);
+
+    if (!query.exec())
+    {
+        lastErrorMessage = query.lastError().text();
+        return donations;
+    }
+
+    while (query.next())
+    {
+        donations.append(Donation(
+            query.value(0).toInt(),
+            query.value(1).toInt(),
+            QDate::fromString(query.value(2).toString(), Qt::ISODate),
+            query.value(3).toString(),
+            query.value(4).toString()));
+    }
+    return donations;
 }
