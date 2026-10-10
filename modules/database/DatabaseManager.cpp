@@ -939,9 +939,9 @@ int DatabaseManager::addDonation(Donation &donation, QString &error)
     QString donorGroup = query.value(1).toString();
     QDate lastDate = QDate::fromString(query.value(2).toString(), Qt::ISODate);
 
-    if (age < 18)
+    if (age < 18 || age > 65)
     {
-        error = "Donor must be at least 18 years old.";
+        error = "Donor must be between 18 and 65 years.";
         return -1;
     }
 

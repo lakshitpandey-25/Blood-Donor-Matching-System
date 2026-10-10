@@ -79,7 +79,7 @@ void DonorDashboard::refreshInfo()
 
     // Cooldown over -> eligible again
     QDate last = QDate::fromString(donor.getLastDonationDate(), Qt::ISODate);
-    if (!donor.isEligible() && donor.getAge() >= 18 && last.isValid()
+    if (!donor.isEligible() && donor.getAge() >= 18 && donor.getAge() <= 65 && last.isValid()
         && last.daysTo(QDate::currentDate()) >= 90)
     {
         database.updateDonorEligibility(userId, true);
