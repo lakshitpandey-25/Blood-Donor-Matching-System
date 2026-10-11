@@ -9,6 +9,17 @@ bool LoginManager::validateLogin(const QString& email,
                                  const QString& password,
                                  const QString& selectedRole) const
 {
+    int userId = -1;
+    return validateLogin(email, password, selectedRole, userId);
+}
+
+bool LoginManager::validateLogin(const QString& email,
+                                 const QString& password,
+                                 const QString& selectedRole,
+                                 int& userId) const
+{
+    userId = -1;
+
     if (email.trimmed().isEmpty() || password.isEmpty())
         return false;
 
@@ -18,11 +29,15 @@ bool LoginManager::validateLogin(const QString& email,
         return false;
 
     QString actualRole;
-    int userId = -1;
+    int authenticatedUserId = -1;
 
     if (!database.authenticateUser(
-            email.trimmed(), password, actualRole, userId))
+            email.trimmed(), password, actualRole, authenticatedUserId))
         return false;
 
-    return actualRole.compare(selectedRole, Qt::CaseInsensitive) == 0;
+    if (actualRole.compare(selectedRole, Qt::CaseInsensitive) != 0)
+        return false;
+
+    userId = authenticatedUserId;
+    return true;
 }

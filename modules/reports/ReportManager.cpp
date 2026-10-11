@@ -62,65 +62,74 @@ QString ReportManager::getLastError() const
 // Generate Admin CSV Report
 // ---------------------------------------------------------------
 
-bool ReportManager::generateAdminReport(
-    const QString& fileName)
+bool ReportManager::generateAdminReport(const QString& fileName)
 {
-    if (!database.isOpen())
-    {
+    if (!database.isOpen() && !database.openDatabase())
         return false;
-    }
 
     if (!ensureDirectories())
-    {
         return false;
-    }
 
-    QString filePath =
-        exportDirectory + "/" + fileName;
-
-    QFile file(filePath);
-
-    if (!file.open(
-            QIODevice::WriteOnly |
-            QIODevice::Text))
-    {
+    QFile file(exportDirectory + "/" + fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         return false;
-    }
 
     QTextStream out(&file);
 
-    // CSV header
-    out << "Report Generated,";
-    out << "Total Donors,";
-    out << "Total Recipients,";
-    out << "Total Requests,";
-    out << "Pending Requests\n";
+    auto csv = [](QString value) {
+        value.replace("\"", "\"\"");
+        return "\"" + value + "\"";
+    };
 
-    // Report data
-    int totalDonors =
-        database.countUsersByRole("Donor");
+    out << "ADMIN REPORT\n";
+    out << "Generated At," 
+        << csv(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"))
+        << "\n\n";
 
-    int totalRecipients =
-        database.countUsersByRole("Recipient");
+    out << "SUMMARY\n";
+    out << "Total Donors,Total Recipients,Total Requests,Pending Requests\n";
+    out << database.countUsersByRole("Donor") << ","
+        << database.countUsersByRole("Recipient") << ","
+        << database.countBloodRequests() << ","
+        << database.countBloodRequests("Pending") << "\n\n";
 
-    int totalRequests =
-        database.countBloodRequests();
+    out << "DONORS\n";
+    out << "User ID,Name,Phone,Email,Blood Group,City,Eligible\n";
+    for (const Donor& d : database.getAllDonors()) {
+        out << d.getUserId() << ","
+            << csv(d.getName()) << ","
+            << csv(d.getPhone()) << ","
+            << csv(d.getEmail()) << ","
+            << csv(d.getBloodGroup()) << ","
+            << csv(d.getCity()) << ","
+            << csv(d.isEligible() ? "Yes" : "No") << "\n";
+    }
 
-    int pendingRequests =
-        database.countBloodRequests("Pending");
+    out << "\nRECIPIENTS\n";
+    out << "User ID,Name,Phone,Email,Required Blood,City\n";
+    for (const Recipient& r : database.getAllRecipients()) {
+        out << r.getUserId() << ","
+            << csv(r.getName()) << ","
+            << csv(r.getPhone()) << ","
+            << csv(r.getEmail()) << ","
+            << csv(r.getRequiredBloodGroup()) << ","
+            << csv(r.getCity()) << "\n";
+    }
 
-    out << "\""
-        << QDateTime::currentDateTime()
-               .toString("yyyy-MM-dd HH:mm:ss")
-        << "\",";
-
-    out << totalDonors << ",";
-    out << totalRecipients << ",";
-    out << totalRequests << ",";
-    out << pendingRequests << "\n";
+    out << "\nBLOOD REQUESTS\n";
+    out << "Request ID,Recipient ID,Recipient,Blood Group,City,Units,Status,Created At\n";
+    for (const QVariantMap& r : database.getAllBloodRequests()) {
+        out << r.value("requestId").toInt() << ","
+            << r.value("recipientId").toInt() << ","
+            << csv(r.value("recipientName").toString()) << ","
+            << csv(r.value("bloodGroup").toString()) << ","
+            << csv(r.value("city").toString()) << ","
+            << r.value("units").toInt() << ","
+            << csv(r.value("status").toString()) << ","
+            << csv(r.value("createdAt").toString()) << "\n";
+    }
 
     file.close();
-
     return true;
 }
 

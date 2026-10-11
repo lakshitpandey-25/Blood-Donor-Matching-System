@@ -11,6 +11,11 @@ public:
     bool validateLogin(const QString& email,
                        const QString& password,
                        const QString& selectedRole) const;
+
+    bool validateLogin(const QString& email,
+                       const QString& password,
+                       const QString& selectedRole,
+                       int& userId) const;
 };
 
 #endif

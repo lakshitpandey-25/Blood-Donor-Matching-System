@@ -76,10 +76,13 @@ void LoginWindow::handleLogin()
 
     QString role = roleInput->currentText();
 
+    int authenticatedUserId = -1;
+
     bool result = loginManager.validateLogin(
         emailInput->text(),
         passwordInput->text(),
-        role);
+        role,
+        authenticatedUserId);
 
     if (result)
     {
@@ -96,7 +99,7 @@ void LoginWindow::handleLogin()
         else if (role == "Recipient")
         {
             RecipientDashboard *dashboard =
-                new RecipientDashboard();
+                new RecipientDashboard(authenticatedUserId);
 
             dashboard->show();
         }
