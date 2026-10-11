@@ -10,6 +10,11 @@ public:
 
     bool validateLogin(const QString& email,
                        const QString& password) const;
+
+    bool authenticate(const QString& email,
+                      const QString& password,
+                      QString& role,
+                      int& userId) const;
 };
 
 #endif

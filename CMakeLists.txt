@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.16)
 
 project(BloodDonorMatchingSystem VERSION 1.0 LANGUAGES CXX)
@@ -9,10 +10,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(Qt6_DIR "C:/QT/6.11.2/mingw_64/lib/cmake/Qt6")
+# Find Qt
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Test)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
-
+# Main Application
 add_executable(BloodDonorMatchingSystem
     main.cpp
 
@@ -69,4 +70,71 @@ target_include_directories(BloodDonorMatchingSystem PRIVATE
 target_link_libraries(BloodDonorMatchingSystem
     Qt6::Widgets
     Qt6::Sql
+)
+
+# Member 3 - Matching System Tests
+add_executable(MatchingSystemTest
+    tests/MatchingSystemTest.cpp
+
+    modules/matching/MatchingSystem.cpp
+    modules/matching/MatchingSystem.h
+
+    models/User.cpp
+    models/User.h
+
+    models/Donor.cpp
+    models/Donor.h
+
+    models/BloodRequest.cpp
+    models/BloodRequest.h
+)
+
+target_include_directories(MatchingSystemTest PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(MatchingSystemTest
+    Qt6::Test
+    Qt6::Core
+)
+
+enable_testing()
+
+add_test(
+    NAME MatchingSystemTest
+    COMMAND MatchingSystemTest
+)
+# Member 3 - Database Manager Tests
+add_executable(DatabaseManagerTest
+    tests/DatabaseManagerTest.cpp
+
+    modules/database/DatabaseManager.cpp
+    modules/database/DatabaseManager.h
+
+    models/User.cpp
+    models/User.h
+
+    models/Donor.cpp
+    models/Donor.h
+
+    models/Recipient.cpp
+    models/Recipient.h
+
+    models/Admin.cpp
+    models/Admin.h
+)
+
+target_include_directories(DatabaseManagerTest PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(DatabaseManagerTest
+    Qt6::Test
+    Qt6::Core
+    Qt6::Sql
+)
+
+add_test(
+    NAME DatabaseManagerTest
+    COMMAND DatabaseManagerTest
 )

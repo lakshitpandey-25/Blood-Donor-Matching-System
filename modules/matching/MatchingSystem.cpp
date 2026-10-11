@@ -1,9 +1,14 @@
+
 #include "MatchingSystem.h"
 
+#include <QDate>
+
+// Constructor
 MatchingSystem::MatchingSystem()
 {
 }
 
+// Find compatible donors
 QList<Donor*> MatchingSystem::findMatchingDonors(
     const BloodRequest& request,
     const QList<Donor*>& donors)
@@ -25,7 +30,7 @@ QList<Donor*> MatchingSystem::findMatchingDonors(
             continue;
         }
 
-        // 2. Check location when request city is provided
+        // 2. Check city
         if (!isLocationMatch(
                 donor->getCity(),
                 request.getCity()))
@@ -33,13 +38,13 @@ QList<Donor*> MatchingSystem::findMatchingDonors(
             continue;
         }
 
-        // 3. Check current donor eligibility
+        // 3. Check donor eligibility
         if (!isEligibleForDonation(donor))
         {
             continue;
         }
 
-        // 4. Check 90-day donation cooldown
+        // 4. Check 90-day cooldown
         if (!passed90DayCooldown(donor))
         {
             continue;
@@ -51,6 +56,7 @@ QList<Donor*> MatchingSystem::findMatchingDonors(
     return matchingDonors;
 }
 
+// Check blood group compatibility
 bool MatchingSystem::isCompatibleBloodGroup(
     const QString& donorBloodGroup,
     const QString& requiredBloodGroup) const
@@ -63,28 +69,22 @@ bool MatchingSystem::isCompatibleBloodGroup(
         return false;
     }
 
-    // Same blood group is always compatible.
-    if (donor == required)
-    {
-        return true;
-    }
-
-    // O- can donate to all blood groups.
+    // O negative can donate red blood cells to all groups.
     if (donor == "O-")
     {
         return true;
     }
 
-    // O+ can donate to positive blood groups.
+    // O positive
     if (donor == "O+")
     {
-        return required == "A+" ||
+        return required == "O+" ||
+               required == "A+" ||
                required == "B+" ||
-               required == "AB+" ||
-               required == "O+";
+               required == "AB+";
     }
 
-    // A- can donate to A and AB, both negative and positive.
+    // A negative
     if (donor == "A-")
     {
         return required == "A-" ||
@@ -93,14 +93,14 @@ bool MatchingSystem::isCompatibleBloodGroup(
                required == "AB+";
     }
 
-    // A+ can donate to A+ and AB+.
+    // A positive
     if (donor == "A+")
     {
         return required == "A+" ||
                required == "AB+";
     }
 
-    // B- can donate to B and AB, both negative and positive.
+    // B negative
     if (donor == "B-")
     {
         return required == "B-" ||
@@ -109,21 +109,21 @@ bool MatchingSystem::isCompatibleBloodGroup(
                required == "AB+";
     }
 
-    // B+ can donate to B+ and AB+.
+    // B positive
     if (donor == "B+")
     {
         return required == "B+" ||
                required == "AB+";
     }
 
-    // AB- can donate to AB- and AB+.
+    // AB negative
     if (donor == "AB-")
     {
         return required == "AB-" ||
                required == "AB+";
     }
 
-    // AB+ can donate only to AB+.
+    // AB positive
     if (donor == "AB+")
     {
         return required == "AB+";
@@ -132,6 +132,7 @@ bool MatchingSystem::isCompatibleBloodGroup(
     return false;
 }
 
+// Check city matching
 bool MatchingSystem::isLocationMatch(
     const QString& donorCity,
     const QString& requestCity) const
@@ -139,18 +140,18 @@ bool MatchingSystem::isLocationMatch(
     QString donorLocation = donorCity.trimmed();
     QString requestLocation = requestCity.trimmed();
 
-    // If no city is specified in the request,
-    // location should not restrict matching.
+    // No city restriction if request city is empty.
     if (requestLocation.isEmpty())
     {
         return true;
     }
 
     return donorLocation.compare(
-               requestLocation,
-               Qt::CaseInsensitive) == 0;
+        requestLocation,
+        Qt::CaseInsensitive) == 0;
 }
 
+// Check donor's eligibility flag
 bool MatchingSystem::isEligibleForDonation(
     const Donor* donor) const
 {
@@ -162,6 +163,7 @@ bool MatchingSystem::isEligibleForDonation(
     return donor->isEligible();
 }
 
+// Check the 90-day cooldown
 bool MatchingSystem::passed90DayCooldown(
     const Donor* donor) const
 {
@@ -170,9 +172,10 @@ bool MatchingSystem::passed90DayCooldown(
         return false;
     }
 
-    QString lastDonation = donor->getLastDonationDate().trimmed();
+    QString lastDonation =
+        donor->getLastDonationDate().trimmed();
 
-    // No previous donation means the donor has no cooldown restriction.
+    // Empty means no previous donation is recorded.
     if (lastDonation.isEmpty())
     {
         return true;
@@ -181,10 +184,11 @@ bool MatchingSystem::passed90DayCooldown(
     QDate lastDonationDate =
         QDate::fromString(lastDonation, "yyyy-MM-dd");
 
-    // Invalid date is not treated as a recent donation.
-    if (!lastDonationDate.isValid())
+    // Reject invalid dates.
+    if (!lastDonationDate.isValid() ||
+        lastDonationDate.toString("yyyy-MM-dd") != lastDonation)
     {
-        return true;
+        return false;
     }
 
     QDate today = QDate::currentDate();
@@ -192,11 +196,12 @@ bool MatchingSystem::passed90DayCooldown(
     int daysSinceDonation =
         lastDonationDate.daysTo(today);
 
-    // Future dates are not accepted as having completed cooldown.
+    // Reject future dates.
     if (daysSinceDonation < 0)
     {
         return false;
     }
 
+    // At least 90 days must have passed.
     return daysSinceDonation >= 90;
 }

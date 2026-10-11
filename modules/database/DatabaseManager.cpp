@@ -339,15 +339,54 @@ int DatabaseManager::addBloodRequest(int recipientId,
                                      const QString& city,
                                      int units)
 {
+    if (recipientId <= 0 || bloodGroup.trimmed().isEmpty()
+        || units <= 0)
+    {
+        lastErrorMessage = "Invalid blood request details.";
+        return -1;
+    }
+
+    QSqlQuery checkQuery(database());
+
+    checkQuery.prepare(
+        "SELECT request_id FROM blood_requests "
+        "WHERE recipient_id = ? "
+        "AND blood_group = ? "
+        "AND LOWER(TRIM(COALESCE(city, ''))) = LOWER(TRIM(?)) "
+        "AND units = ? "
+        "AND status = 'Pending' "
+        "LIMIT 1"
+    );
+
+    checkQuery.addBindValue(recipientId);
+    checkQuery.addBindValue(bloodGroup.trimmed());
+    checkQuery.addBindValue(city.trimmed());
+    checkQuery.addBindValue(units);
+
+    if (!checkQuery.exec())
+    {
+        lastErrorMessage = checkQuery.lastError().text();
+        return -1;
+    }
+
+    if (checkQuery.next())
+    {
+        lastErrorMessage =
+            "An identical pending request already exists.";
+        return -1;
+    }
+
     QSqlQuery query(database());
 
-    query.prepare("INSERT INTO blood_requests "
-                  "(recipient_id, blood_group, city, units) "
-                  "VALUES (?, ?, ?, ?)");
+    query.prepare(
+        "INSERT INTO blood_requests "
+        "(recipient_id, blood_group, city, units) "
+        "VALUES (?, ?, ?, ?)"
+    );
 
     query.addBindValue(recipientId);
-    query.addBindValue(bloodGroup);
-    query.addBindValue(city);
+    query.addBindValue(bloodGroup.trimmed());
+    query.addBindValue(city.trimmed());
     query.addBindValue(units);
 
     if (!query.exec())
@@ -356,6 +395,7 @@ int DatabaseManager::addBloodRequest(int recipientId,
         return -1;
     }
 
+    lastErrorMessage.clear();
     return query.lastInsertId().toInt();
 }
 
