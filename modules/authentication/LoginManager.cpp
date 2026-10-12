@@ -20,21 +20,13 @@ bool LoginManager::authenticate(const QString& email,
                                 int& userId) const
 {
     if (email.trimmed().isEmpty() || password.isEmpty())
-    {
         return false;
-    }
 
     DatabaseManager database;
 
-    if (!database.openDatabase())
-    {
+    if (!database.openDatabase() || !database.isOpen())
         return false;
-    }
 
     return database.authenticateUser(
-        email.trimmed(),
-        password,
-        role,
-        userId
-    );
+        email.trimmed(), password, role, userId);
 }

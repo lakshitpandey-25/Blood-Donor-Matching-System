@@ -19,21 +19,15 @@ LoginWindow::LoginWindow()
 
     QLabel *titleLabel =
         new QLabel("Blood Donor & Matching System");
-
-    QLabel *emailLabel =
-        new QLabel("Email:");
+    QLabel *emailLabel = new QLabel("Email:");
 
     emailInput = new QLineEdit();
 
-    QLabel *passwordLabel =
-        new QLabel("Password:");
-
+    QLabel *passwordLabel = new QLabel("Password:");
     passwordInput = new QLineEdit();
     passwordInput->setEchoMode(QLineEdit::Password);
 
-    QLabel *roleLabel =
-        new QLabel("Login As:");
-
+    QLabel *roleLabel = new QLabel("Login As:");
     roleInput = new QComboBox();
     roleInput->addItem("Donor");
     roleInput->addItem("Recipient");
@@ -41,11 +35,9 @@ LoginWindow::LoginWindow()
 
     loginButton = new QPushButton("Login");
     registerButton = new QPushButton("Create Account");
-
     messageLabel = new QLabel("");
 
     QVBoxLayout *layout = new QVBoxLayout();
-
     layout->addWidget(titleLabel);
     layout->addWidget(emailLabel);
     layout->addWidget(emailInput);
@@ -71,19 +63,18 @@ void LoginWindow::handleLogin()
     LoginManager loginManager;
 
     QString role;
-    int userId = 0;
+    int userId = -1;
 
     bool result = loginManager.authenticate(
         emailInput->text(),
         passwordInput->text(),
         role,
-        userId
-    );
+        userId);
 
     if (!result)
     {
         messageLabel->setText(
-            "Invalid Email or Password!");
+            "Invalid email or password, or database error!");
         return;
     }
 
@@ -94,36 +85,32 @@ void LoginWindow::handleLogin()
         return;
     }
 
-    messageLabel->setText(
-        "Login Successful as " + role);
+    messageLabel->setText("Login successful as " + role);
 
     if (role == "Donor")
     {
-        DonorDashboard *dashboard =
-            new DonorDashboard();
-
+        DonorDashboard *dashboard = new DonorDashboard();
         dashboard->show();
     }
     else if (role == "Recipient")
     {
         RecipientDashboard *dashboard =
             new RecipientDashboard(userId);
-
         dashboard->show();
     }
     else if (role == "Admin")
     {
-        AdminDashboard *dashboard =
-            new AdminDashboard();
-
+        AdminDashboard *dashboard = new AdminDashboard();
         dashboard->show();
+    }
+    else
+    {
+        messageLabel->setText("Unknown user role.");
     }
 }
 
 void LoginWindow::openRegisterWindow()
 {
-    RegisterWindow *window =
-        new RegisterWindow();
-
+    RegisterWindow *window = new RegisterWindow();
     window->show();
 }
