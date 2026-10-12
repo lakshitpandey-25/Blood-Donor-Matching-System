@@ -35,7 +35,12 @@ add_executable(BloodDonorMatchingSystem
     models/Recipient.cpp
     models/Recipient.h
 
-
+	models/BloodRequest.cpp
+models/BloodRequest.h
+modules/matching/MatchingSystem.cpp
+modules/matching/MatchingSystem.h
+modules/reports/ReportManager.cpp
+modules/reports/ReportManager.h
     models/Admin.cpp
     models/Admin.h
 
