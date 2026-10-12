@@ -223,10 +223,14 @@ RecipientDashboard::RecipientDashboard(int userId)
 
             if (requestId < 0)
             {
-                QMessageBox::critical(
+                const QString error = database.getLastError();
+
+                QMessageBox::warning(
                     this,
                     "Request Failed",
-                    "Could not save blood request."
+                    error.isEmpty()
+                        ? "Could not save blood request."
+                        : error
                 );
 
                 return;
