@@ -1,5 +1,5 @@
 #include "RegisterWindow.h"
-#include "../modules/authentication/AuthenticationManager.h"
+#include <QDateEdit>
 
 #include "../models/User.h"
 #include "../models/Donor.h"
@@ -7,19 +7,22 @@
 #include "../modules/database/DatabaseManager.h"
 
 #include <QDate>
-
 #include <QLabel>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QDateEdit>
-#include <QIntValidator>
+#include "../models/User.h"
+#include "../models/Donor.h"
+#include "../models/Recipient.h"
+#include "../modules/database/DatabaseManager.h"
 
+#include <QDate>
 RegisterWindow::RegisterWindow()
 {
     setWindowTitle("Create Account");
     resize(420, 720);
+
 
     QLabel *titleLabel =
         new QLabel("Create New Account");
@@ -59,6 +62,8 @@ RegisterWindow::RegisterWindow()
     roleInput->addItem("Donor");
     roleInput->addItem("Recipient");
 
+
+
     QLabel *bloodGroupLabel = new QLabel("Blood Group / Required Blood Group:");
     bloodGroupInput = new QLineEdit();
     bloodGroupInput->setPlaceholderText("e.g. O+");
@@ -78,6 +83,7 @@ RegisterWindow::RegisterWindow()
     QLabel *lastDonationDateLabel = new QLabel("Last Donation Date (optional):");
     lastDonationDateInput = new QLineEdit();
     lastDonationDateInput->setPlaceholderText("YYYY-MM-DD or leave blank");
+
     registerButton =
         new QPushButton("Register");
 
@@ -113,11 +119,51 @@ RegisterWindow::RegisterWindow()
     layout->addWidget(cityInput);
     layout->addWidget(lastDonationDateLabel);
     layout->addWidget(lastDonationDateInput);
+    layout->addWidget(new QLabel("Last Donation Date:"));
+layout->addWidget(lastDonationInput);
+    // Recipient fields
+requiredBloodGroupInput = new QComboBox(this);
+requiredBloodGroupInput->addItems({
+    "A+", "A-", "B+", "B-",
+    "AB+", "AB-", "O+", "O-"
+});
 
+recipientCityInput = new QLineEdit(this);
+recipientCityInput->setPlaceholderText("Enter your city");
+
+
+
+layout->addWidget(new QLabel("Required Blood Group:"));
+layout->addWidget(requiredBloodGroupInput);
+layout->addWidget(new QLabel("Recipient City:"));
+layout->addWidget(recipientCityInput);
     layout->addWidget(registerButton);
     layout->addWidget(messageLabel);
 
     setLayout(layout);
+
+    // Initially show donor fields
+    requiredBloodGroupInput->hide();
+    recipientCityInput->hide();
+
+    // Change fields according to role
+    connect(
+        roleInput,
+        &QComboBox::currentTextChanged,
+        this,
+        [this](const QString &role)
+        {
+            bool isDonor = (role == "Donor");
+
+            bloodGroupInput->setVisible(isDonor);
+            ageInput->setVisible(isDonor);
+            genderInput->setVisible(isDonor);
+            cityInput->setVisible(isDonor);
+            lastDonationDateInput->setVisible(isDonor);
+
+            requiredBloodGroupInput->setVisible(!isDonor);
+            recipientCityInput->setVisible(!isDonor);
+        });
 
     connect(
         registerButton,
@@ -125,8 +171,10 @@ RegisterWindow::RegisterWindow()
         this,
         &RegisterWindow::handleRegistration);
 }
+
 void RegisterWindow::handleRegistration()
 {
+
     QString name = nameInput->text().trimmed();
     QString phone = phoneInput->text().trimmed();
     QString email = emailInput->text().trimmed();
@@ -137,6 +185,7 @@ void RegisterWindow::handleRegistration()
 
     if (name.isEmpty() || phone.isEmpty() ||
         email.isEmpty() || password.isEmpty())
+
     {
         messageLabel->setText(
             "Please fill Name, Phone, Email and Password.");
@@ -199,24 +248,32 @@ void RegisterWindow::handleRegistration()
         userId = db.addDonor(donor);
     }
     else
+{
+    QString requiredBloodGroup =
+        requiredBloodGroupInput->currentText().trimmed().toUpper();
+
+    QString recipientCity =
+        recipientCityInput->text().trimmed();
+
+    const QStringList validBloodGroups = {
+        "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"
+    };
+
+    if (!validBloodGroups.contains(requiredBloodGroup) ||
+        recipientCity.isEmpty())
     {
-        const QStringList validBloodGroups = {
-            "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"
-        };
-
-        if (!validBloodGroups.contains(bloodGroup) || city.isEmpty())
-        {
-            messageLabel->setText(
-                "Enter a valid required blood group and city.");
-            return;
-        }
-
-        Recipient recipient(
-            0, name, phone, email, password, bloodGroup, city
-        );
-
-        userId = db.addRecipient(recipient);
+        messageLabel->setText(
+            "Enter a valid required blood group and city.");
+        return;
     }
+
+    Recipient recipient(
+        0, name, phone, email, password,
+        requiredBloodGroup, recipientCity
+    );
+
+    userId = db.addRecipient(recipient);
+}
 
     if (userId < 0)
     {
@@ -224,7 +281,6 @@ void RegisterWindow::handleRegistration()
             "Registration failed: " + db.getLastError());
         return;
     }
-
     messageLabel->setText(
         "Registration successful! You can now log in.");
     nameInput->clear();
@@ -237,3 +293,4 @@ void RegisterWindow::handleRegistration()
     cityInput->clear();
     lastDonationDateInput->clear();
 }
+

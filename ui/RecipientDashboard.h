@@ -11,7 +11,7 @@ class QTableWidget;
 class RecipientDashboard : public QWidget
 {
 public:
-    explicit RecipientDashboard(int recipientId);
+ explicit RecipientDashboard(int recipientId);
 
 private:
     QComboBox* bloodGroupInput;

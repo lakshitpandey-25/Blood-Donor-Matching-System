@@ -6,6 +6,12 @@ LoginManager::LoginManager()
 }
 
 bool LoginManager::validateLogin(const QString& email,
+                                 const QString& password) const
+{
+    return !getUserRole(email, password).isEmpty();
+}
+
+bool LoginManager::validateLogin(const QString& email,
                                  const QString& password,
                                  const QString& selectedRole) const
 {
@@ -28,11 +34,15 @@ bool LoginManager::validateLogin(const QString& email,
     if (!database.openDatabase())
         return false;
 
+    if (!database.createTables())
+        return false;
+
     QString actualRole;
     int authenticatedUserId = -1;
 
     if (!database.authenticateUser(
-            email.trimmed(), password, actualRole, authenticatedUserId))
+            email.trimmed(), password,
+            actualRole, authenticatedUserId))
         return false;
 
     if (actualRole.compare(selectedRole, Qt::CaseInsensitive) != 0)
@@ -40,4 +50,52 @@ bool LoginManager::validateLogin(const QString& email,
 
     userId = authenticatedUserId;
     return true;
+}
+
+QString LoginManager::getUserRole(const QString& email,
+                                  const QString& password) const
+{
+    if (email.trimmed().isEmpty() || password.isEmpty())
+        return "";
+
+    DatabaseManager database;
+
+    if (!database.openDatabase())
+        return "";
+
+    if (!database.createTables())
+        return "";
+
+    QString role;
+    int userId = 0;
+
+    if (database.authenticateUser(
+            email.trimmed(), password, role, userId))
+        return role;
+
+    return "";
+}
+
+int LoginManager::getUserId(const QString& email,
+                             const QString& password) const
+{
+    if (email.trimmed().isEmpty() || password.isEmpty())
+        return 0;
+
+    DatabaseManager database;
+
+    if (!database.openDatabase())
+        return 0;
+
+    if (!database.createTables())
+        return 0;
+
+    QString role;
+    int userId = 0;
+
+    if (database.authenticateUser(
+            email.trimmed(), password, role, userId))
+        return userId;
+
+    return 0;
 }

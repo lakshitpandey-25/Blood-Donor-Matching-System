@@ -6,10 +6,11 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QStringList>
+#include <QDate>
 
 namespace
 {
-    Donor donorFromQuery(const QSqlQuery& query)
+    Donor donorFromQuery(const QSqlQuery &query)
     {
         return Donor(
             query.value(0).toInt(),
@@ -26,7 +27,7 @@ namespace
         );
     }
 
-    Recipient recipientFromQuery(const QSqlQuery& query)
+    Recipient recipientFromQuery(const QSqlQuery &query)
     {
         return Recipient(
             query.value(0).toInt(),
@@ -39,7 +40,7 @@ namespace
         );
     }
 
-    Admin adminFromQuery(const QSqlQuery& query)
+    Admin adminFromQuery(const QSqlQuery &query)
     {
         return Admin(
             query.value(0).toInt(),
@@ -50,20 +51,20 @@ namespace
         );
     }
 
-    const char* DONOR_SELECT =
+    const char *DONOR_SELECT =
         "SELECT u.user_id, u.name, u.phone, u.email, u.password, "
         "d.blood_group, d.age, d.gender, d.city, "
         "d.last_donation_date, d.eligible "
         "FROM users u "
         "JOIN donors d ON u.user_id = d.user_id ";
 
-    const char* RECIPIENT_SELECT =
+    const char *RECIPIENT_SELECT =
         "SELECT u.user_id, u.name, u.phone, u.email, u.password, "
         "r.required_blood_group, r.city "
         "FROM users u "
         "JOIN recipients r ON u.user_id = r.user_id ";
 
-    const char* ADMIN_SELECT =
+    const char *ADMIN_SELECT =
         "SELECT user_id, name, phone, email, password "
         "FROM users WHERE role = 'Admin' ";
 }
@@ -86,7 +87,7 @@ QSqlDatabase DatabaseManager::database() const
     return QSqlDatabase::database(connectionName, false);
 }
 
-QString DatabaseManager::hashPassword(const QString& password) const
+QString DatabaseManager::hashPassword(const QString &password) const
 {
     QByteArray hash = QCryptographicHash::hash(
         password.toUtf8(),
@@ -198,8 +199,13 @@ bool DatabaseManager::createTables()
                   "FOREIGN KEY (user_id) REFERENCES users(user_id) "
                   "ON DELETE CASCADE)";
 
-    // Recipients
+ // Recipients
     statements << "CREATE TABLE IF NOT EXISTS recipients ("
+                  "user_id INTEGER PRIMARY KEY, "
+                  "required_blood_group TEXT, "
+                  "city TEXT, "
+                  "FOREIGN KEY (user_id) REFERENCES users(user_id) "
+                  "ON DELETE CASCADE)";    statements << "CREATE TABLE IF NOT EXISTS recipients ("
                   "user_id INTEGER PRIMARY KEY, "
                   "required_blood_group TEXT, "
                   "city TEXT, "
@@ -230,7 +236,7 @@ bool DatabaseManager::createTables()
 
     QSqlQuery query(database());
 
-    for (const QString& statement : statements)
+    for (const QString &statement : statements)
     {
         if (!query.exec(statement))
         {
@@ -268,7 +274,7 @@ bool DatabaseManager::createDefaultAdmin()
 // Create
 // ---------------------------------------------------------------
 
-int DatabaseManager::insertUser(const User& user)
+int DatabaseManager::insertUser(const User &user)
 {
     QSqlQuery query(database());
 
@@ -293,7 +299,7 @@ int DatabaseManager::insertUser(const User& user)
     return query.lastInsertId().toInt();
 }
 
-int DatabaseManager::addDonor(const Donor& donor)
+int DatabaseManager::addDonor(const Donor &donor)
 {
     QSqlDatabase db = database();
 
@@ -345,7 +351,7 @@ int DatabaseManager::addDonor(const Donor& donor)
     return userId;
 }
 
-int DatabaseManager::addRecipient(const Recipient& recipient)
+int DatabaseManager::addRecipient(const Recipient &recipient)
 {
     QSqlDatabase db = database();
 
@@ -392,16 +398,15 @@ int DatabaseManager::addRecipient(const Recipient& recipient)
     return userId;
 }
 
-int DatabaseManager::addAdmin(const Admin& admin)
+int DatabaseManager::addAdmin(const Admin &admin)
 {
     return insertUser(admin);
 }
 
 int DatabaseManager::addBloodRequest(
     int recipientId,
-    const QString& bloodGroup,
-    const QString& city,
-    int units)
+const QString& bloodGroup,
+    const QString& city,    int units)
 {
     QSqlQuery query(database());
 
@@ -429,7 +434,7 @@ int DatabaseManager::addBloodRequest(
 // Read
 // ---------------------------------------------------------------
 
-bool DatabaseManager::emailExists(const QString& email) const
+bool DatabaseManager::emailExists(const QString &email) const
 {
     QSqlQuery query(database());
 
@@ -452,8 +457,7 @@ bool DatabaseManager::authenticateUser(
     const QString& email,
     const QString& password,
     QString& role,
-    int& userId) const
-{
+    int& userId) const{
     QSqlQuery query(database());
 
     query.prepare(
@@ -465,7 +469,12 @@ bool DatabaseManager::authenticateUser(
     query.addBindValue(email);
     query.addBindValue(hashPassword(password));
 
-    if (query.exec() && query.next())
+    if (!query.exec())
+    {
+        return false;
+    }
+
+    if (query.next())
     {
         userId = query.value(0).toInt();
         role = query.value(1).toString();
@@ -634,8 +643,7 @@ QList<QVariantMap> DatabaseManager::getAllBloodRequests() const
         "b.city, "
         "b.units, "
         "b.status, "
-        "b.created_at "
-        "FROM blood_requests b "
+        "b.created_at "        "FROM blood_requests b "
         "JOIN users u ON b.recipient_id = u.user_id "
         "ORDER BY b.request_id DESC"
     );
@@ -681,15 +689,13 @@ QList<QVariantMap> DatabaseManager::getAllBloodRequests() const
 }
 
 int DatabaseManager::countUsersByRole(
-    const QString& role) const
-{
+    const QString& role) const{
     QSqlQuery query(database());
 
     query.prepare(
         "SELECT COUNT(*) "
         "FROM users "
-        "WHERE role = ?"
-    );
+        "WHERE role = ?"    );
 
     query.addBindValue(role);
 
@@ -702,16 +708,14 @@ int DatabaseManager::countUsersByRole(
 }
 
 int DatabaseManager::countBloodRequests(
-    const QString& status) const
-{
+    const QString& status) const{
     QSqlQuery query(database());
 
     if (status.isEmpty())
     {
         query.prepare(
             "SELECT COUNT(*) "
-            "FROM blood_requests"
-        );
+            "FROM blood_requests"        );
     }
     else
     {
@@ -731,20 +735,17 @@ int DatabaseManager::countBloodRequests(
 
     return 0;
 }
-
 // ---------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------
 
 bool DatabaseManager::updateUserInfo(
-    const User& user)
-{
+    const User& user){
     QSqlQuery query(database());
 
     query.prepare(
         "UPDATE users "
-        "SET name = ?, phone = ?, email = ? "
-        "WHERE user_id = ?"
+        "SET name = ?, phone = ?, email = ? "        "WHERE user_id = ?"
     );
 
     query.addBindValue(user.getName());
@@ -762,8 +763,7 @@ bool DatabaseManager::updateUserInfo(
 }
 
 bool DatabaseManager::updateDonor(
-    const Donor& donor)
-{
+    const Donor& donor){
     QSqlDatabase db = database();
 
     if (!db.transaction())
@@ -787,7 +787,7 @@ bool DatabaseManager::updateDonor(
         "gender = ?, "
         "city = ?, "
         "last_donation_date = ?, "
-        "eligible = ? "
+        "eligible = "
         "WHERE user_id = ?"
     );
 
@@ -817,7 +817,9 @@ bool DatabaseManager::updateDonor(
 }
 
 bool DatabaseManager::updateRecipient(
+
     const Recipient& recipient)
+
 {
     QSqlDatabase db = database();
 
@@ -836,12 +838,15 @@ bool DatabaseManager::updateRecipient(
     QSqlQuery query(db);
 
     query.prepare(
+
         "UPDATE recipients "
         "SET required_blood_group = ?, city = ? "
+
         "WHERE user_id = ?"
     );
 
     query.addBindValue(
+
         recipient.getRequiredBloodGroup()
     );
 
@@ -852,6 +857,7 @@ bool DatabaseManager::updateRecipient(
     query.addBindValue(
         recipient.getUserId()
     );
+
 
     if (!query.exec())
     {
@@ -871,26 +877,32 @@ bool DatabaseManager::updateRecipient(
 }
 
 bool DatabaseManager::updateAdmin(
-    const Admin& admin)
+
+    const Admin &admin)
+
 {
     return updateUserInfo(admin);
 }
 
 bool DatabaseManager::updatePassword(
     int userId,
+
     const QString& newPassword)
+
 {
     QSqlQuery query(database());
 
     query.prepare(
-        "UPDATE users "
-        "SET password = ? "
+
+        "UPDATE users SET password = ? "
+
         "WHERE user_id = ?"
     );
 
     query.addBindValue(
-        hashPassword(newPassword)
-    );
+
+        hashPassword(newPassword));
+
 
     query.addBindValue(userId);
 
@@ -910,14 +922,12 @@ bool DatabaseManager::updateDonorEligibility(
     QSqlQuery query(database());
 
     query.prepare(
-        "UPDATE donors "
-        "SET eligible = ? "
+
+        "UPDATE donors SET eligible = ? "
         "WHERE user_id = ?"
     );
 
-    query.addBindValue(
-        eligible ? 1 : 0
-    );
+    query.addBindValue(eligible ? 1 : 0);
 
     query.addBindValue(userId);
 
@@ -932,13 +942,15 @@ bool DatabaseManager::updateDonorEligibility(
 
 bool DatabaseManager::updateBloodRequestStatus(
     int requestId,
-    const QString& status)
+    const QString &status)
+
 {
     QSqlQuery query(database());
 
     query.prepare(
-        "UPDATE blood_requests "
-        "SET status = ? "
+
+        "UPDATE blood_requests SET status = ? "
+
         "WHERE request_id = ?"
     );
 
@@ -964,8 +976,9 @@ bool DatabaseManager::deleteUser(
     QSqlQuery query(database());
 
     query.prepare(
-        "DELETE FROM users "
-        "WHERE user_id = ?"
+
+        "DELETE FROM users WHERE user_id = ?"
+
     );
 
     query.addBindValue(userId);
@@ -998,4 +1011,135 @@ bool DatabaseManager::deleteBloodRequest(
     }
 
     return query.numRowsAffected() > 0;
+}
+
+// ---------------------------------------------------------------
+// Donations
+// ---------------------------------------------------------------
+
+int DatabaseManager::addDonation(Donation &donation, QString &error)
+{
+    QSqlDatabase db = database();
+    int donorId = donation.getDonorId();
+    QSqlQuery query(db);
+
+    query.prepare("SELECT age, blood_group, last_donation_date "
+                  "FROM donors WHERE user_id = ?");
+    query.addBindValue(donorId);
+    if (!query.exec() || !query.next())
+    {
+        error = "Donor not found.";
+        return -1;
+    }
+
+    int age = query.value(0).toInt();
+    QString donorGroup = query.value(1).toString();
+    QDate lastDate = QDate::fromString(query.value(2).toString(), Qt::ISODate);
+
+    if (age < 18 || age > 65)
+    {
+        error = "Donor must be between 18 and 65 years.";
+        return -1;
+    }
+
+    QDate date = donation.getDonationDate();
+    if (!date.isValid())
+    {
+        error = "Donation date is not valid.";
+        return -1;
+    }
+    if (date > QDate::currentDate())
+    {
+        error = "Donation date cannot be in the future.";
+        return -1;
+    }
+
+    query.prepare("SELECT MAX(donation_date) FROM donations WHERE donor_id = ?");
+    query.addBindValue(donorId);
+    if (query.exec() && query.next() && !query.value(0).isNull())
+    {
+        QDate recorded = QDate::fromString(query.value(0).toString(), Qt::ISODate);
+        if (recorded.isValid() && (!lastDate.isValid() || recorded > lastDate))
+            lastDate = recorded;
+    }
+
+    if (lastDate.isValid() && lastDate.daysTo(date) < 90)
+    {
+        error = QString("Next donation is allowed after %1.")
+                    .arg(lastDate.addDays(90).toString(Qt::ISODate));
+        return -1;
+    }
+
+    if (donation.getBloodGroup().isEmpty())
+        donation.setBloodGroup(donorGroup);
+
+    if (!db.transaction())
+    {
+        error = db.lastError().text();
+        return -1;
+    }
+
+    query.prepare("INSERT INTO donations "
+                  "(donor_id, donation_date, hospital, blood_group) "
+                  "VALUES (?, ?, ?, ?)");
+    query.addBindValue(donorId);
+    query.addBindValue(date.toString(Qt::ISODate));
+    query.addBindValue(donation.getHospital());
+    query.addBindValue(donation.getBloodGroup());
+    if (!query.exec())
+    {
+        error = query.lastError().text();
+        db.rollback();
+        return -1;
+    }
+    int newId = query.lastInsertId().toInt();
+
+    query.prepare("UPDATE donors SET last_donation_date = ?, eligible = 0 "
+                  "WHERE user_id = ?");
+    query.addBindValue(date.toString(Qt::ISODate));
+    query.addBindValue(donorId);
+    if (!query.exec())
+    {
+        error = query.lastError().text();
+        db.rollback();
+        return -1;
+    }
+
+    if (!db.commit())
+    {
+        error = db.lastError().text();
+        db.rollback();
+        return -1;
+    }
+
+    donation.setDonationId(newId);
+    return newId;
+}
+
+QList<Donation> DatabaseManager::getDonationsByDonor(int donorId) const
+{
+    QList<Donation> donations;
+    QSqlQuery query(database());
+
+    query.prepare("SELECT donation_id, donor_id, donation_date, hospital, blood_group "
+                  "FROM donations WHERE donor_id = ? "
+                  "ORDER BY donation_date DESC, donation_id DESC");
+    query.addBindValue(donorId);
+
+    if (!query.exec())
+    {
+        lastErrorMessage = query.lastError().text();
+        return donations;
+    }
+
+    while (query.next())
+    {
+        donations.append(Donation(
+            query.value(0).toInt(),
+            query.value(1).toInt(),
+            QDate::fromString(query.value(2).toString(), Qt::ISODate),
+            query.value(3).toString(),
+            query.value(4).toString()));
+    }
+    return donations;
 }

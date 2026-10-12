@@ -1,7 +1,6 @@
 #include "RecipientDashboard.h"
 
 #include "../modules/database/DatabaseManager.h"
-
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
@@ -15,10 +14,12 @@
 #include <QAbstractItemView>
 
 RecipientDashboard::RecipientDashboard(int recipientId)
-    : recipientId(recipientId)
-{
+    : recipientId(recipientId){
+    
+
     setWindowTitle("Recipient Dashboard");
     resize(750, 550);
+
 
     auto* title = new QLabel("Recipient Dashboard");
     auto* form = new QFormLayout();
@@ -27,6 +28,7 @@ RecipientDashboard::RecipientDashboard(int recipientId)
     bloodGroupInput->addItems(
         {"O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"});
 
+    
     cityInput = new QLineEdit();
     cityInput->setPlaceholderText("Enter city");
 
