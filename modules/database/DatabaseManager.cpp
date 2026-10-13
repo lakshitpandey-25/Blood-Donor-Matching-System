@@ -220,6 +220,7 @@ bool DatabaseManager::createTables()
                   "city TEXT, "
                   "units INTEGER NOT NULL DEFAULT 1, "
                   "status TEXT NOT NULL DEFAULT 'Pending', "
+                  "accepted_by INTEGER, "
                   "created_at TEXT DEFAULT CURRENT_TIMESTAMP, "
                   "FOREIGN KEY (recipient_id) REFERENCES recipients(user_id) "
                   "ON DELETE CASCADE)";
@@ -241,6 +242,36 @@ bool DatabaseManager::createTables()
         if (!query.exec(statement))
         {
             lastErrorMessage = query.lastError().text();
+            return false;
+        }
+    }
+    
+    bool hasAcceptedBy = false;
+    QSqlQuery columnQuery(database());
+
+    if (!columnQuery.exec("PRAGMA table_info(blood_requests)"))
+    {
+        lastErrorMessage = columnQuery.lastError().text();
+        return false;
+    }
+
+    while (columnQuery.next())
+    {
+        if (columnQuery.value("name").toString() == "accepted_by")
+        {
+            hasAcceptedBy = true;
+            break;
+        }
+    }
+
+    if (!hasAcceptedBy)
+    {
+        QSqlQuery alterQuery(database());
+
+        if (!alterQuery.exec(
+                "ALTER TABLE blood_requests ADD COLUMN accepted_by INTEGER"))
+        {
+            lastErrorMessage = alterQuery.lastError().text();
             return false;
         }
     }
@@ -629,26 +660,34 @@ QList<Admin> DatabaseManager::getAllAdmins() const
     return admins;
 }
 
+
 QList<QVariantMap> DatabaseManager::getAllBloodRequests() const
 {
     QList<QVariantMap> requests;
-
     QSqlQuery query(database());
 
-    bool ok = query.exec(
+    const QString sql =
         "SELECT b.request_id, "
         "b.recipient_id, "
-        "u.name, "
+        "ru.name, "
         "b.blood_group, "
         "b.city, "
         "b.units, "
         "b.status, "
-        "b.created_at "        "FROM blood_requests b "
-        "JOIN users u ON b.recipient_id = u.user_id "
-        "ORDER BY b.request_id DESC"
-    );
+        "b.created_at, "
+        "b.accepted_by, "
+        "COALESCE(du.name, ''), "
+        "COALESCE(du.phone, ''), "
+        "COALESCE(d.blood_group, ''), "
+        "COALESCE(d.city, '') "
+        "FROM blood_requests b "
+        "JOIN users ru ON b.recipient_id = ru.user_id "
+        "LEFT JOIN users du ON b.accepted_by = du.user_id "
+        "AND du.role = 'Donor' "
+        "LEFT JOIN donors d ON du.user_id = d.user_id "
+        "ORDER BY b.request_id DESC";
 
-    if (!ok)
+    if (!query.exec(sql))
     {
         lastErrorMessage = query.lastError().text();
         return requests;
@@ -658,29 +697,19 @@ QList<QVariantMap> DatabaseManager::getAllBloodRequests() const
     {
         QVariantMap request;
 
-        request["requestId"] =
-            query.value(0).toInt();
-
-        request["recipientId"] =
-            query.value(1).toInt();
-
-        request["recipientName"] =
-            query.value(2).toString();
-
-        request["bloodGroup"] =
-            query.value(3).toString();
-
-        request["city"] =
-            query.value(4).toString();
-
-        request["units"] =
-            query.value(5).toInt();
-
-        request["status"] =
-            query.value(6).toString();
-
-        request["createdAt"] =
-            query.value(7).toString();
+        request["requestId"] = query.value(0).toInt();
+        request["recipientId"] = query.value(1).toInt();
+        request["recipientName"] = query.value(2).toString();
+        request["bloodGroup"] = query.value(3).toString();
+        request["city"] = query.value(4).toString();
+        request["units"] = query.value(5).toInt();
+        request["status"] = query.value(6).toString();
+        request["createdAt"] = query.value(7).toString();
+        request["acceptedBy"] = query.value(8).toInt();
+        request["donorName"] = query.value(9).toString();
+        request["donorPhone"] = query.value(10).toString();
+        request["donorBloodGroup"] = query.value(11).toString();
+        request["donorCity"] = query.value(12).toString();
 
         requests.append(request);
     }
@@ -965,6 +994,42 @@ bool DatabaseManager::updateBloodRequestStatus(
 
     return query.numRowsAffected() > 0;
 }
+
+
+bool DatabaseManager::acceptBloodRequest(int requestId, int donorId)
+{
+    QSqlQuery query(database());
+
+    query.prepare(
+        "UPDATE blood_requests "
+        "SET status = 'Accepted', accepted_by = ? "
+        "WHERE request_id = ? "
+        "AND status = 'Pending' "
+        "AND EXISTS ("
+        "    SELECT 1 FROM donors WHERE user_id = ?"
+        ")"
+    );
+
+    query.addBindValue(donorId);
+    query.addBindValue(requestId);
+    query.addBindValue(donorId);
+
+    if (!query.exec())
+    {
+        lastErrorMessage = query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() <= 0)
+    {
+        lastErrorMessage =
+            "Request is no longer pending or donor account is invalid.";
+        return false;
+    }
+
+    return true;
+}
+
 
 // ---------------------------------------------------------------
 // Delete

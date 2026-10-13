@@ -4,6 +4,9 @@
 
 #include <QLabel>
 #include <QLineEdit>
+#include <QVariantMap>
+#include <QAbstractItemView>
+#include <QDate>
 #include <QDateEdit>
 #include <QPushButton>
 #include <QTableWidget>
@@ -48,11 +51,39 @@ DonorDashboard::DonorDashboard(int userId)
     historyTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     historyTable->horizontalHeader()->setStretchLastSection(true);
 
+    // Pending Blood Requests
+QLabel* requestsTitle =
+    new QLabel("Pending Blood Requests");
+
+requestsTable = new QTableWidget();
+requestsTable->setColumnCount(8);
+
+requestsTable->setHorizontalHeaderLabels(
+    QStringList()
+        << "Request ID"
+        << "Recipient"
+        << "Blood Group"
+        << "City"
+        << "Units"
+        << "Status"
+        << "Requested At"
+        << "Action"
+);
+requestsTable->horizontalHeader()->setSectionResizeMode(
+    QHeaderView::ResizeToContents);
+requestsTable->setEditTriggers(
+    QAbstractItemView::NoEditTriggers
+);
+
+requestsTable->horizontalHeader()->setStretchLastSection(true);
+
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(titleLabel);
     layout->addWidget(infoLabel);
     layout->addLayout(formLayout);
     layout->addWidget(historyTable);
+    layout->addWidget(requestsTitle);
+layout->addWidget(requestsTable);
     layout->addWidget(exportButton);
     setLayout(layout);
 
@@ -61,7 +92,133 @@ DonorDashboard::DonorDashboard(int userId)
 
     refreshInfo();
     loadHistory();
+    loadBloodRequests();
 }
+
+void DonorDashboard::loadBloodRequests()
+{
+    requestsTable->setRowCount(0);
+
+    DatabaseManager database;
+
+    if (!database.openDatabase())
+        return;
+
+    Donor donor = database.getDonorById(userId);
+
+    QList<QVariantMap> requests =
+        database.getAllBloodRequests();
+
+    for (const QVariantMap& request : requests)
+    {
+        QString status =
+            request["status"].toString();
+
+        QString requestedBloodGroup =
+            request["bloodGroup"].toString().trimmed();
+
+        QString requestedCity =
+            request["city"].toString().trimmed();
+
+        // Show only pending requests for matching
+        // blood group and city.
+        if (status.compare("Pending", Qt::CaseInsensitive) != 0)
+            continue;
+
+        if (requestedBloodGroup.compare(
+                donor.getBloodGroup().trimmed(),
+                Qt::CaseInsensitive) != 0)
+            continue;
+
+        if (requestedCity.compare(
+                donor.getCity().trimmed(),
+                Qt::CaseInsensitive) != 0)
+            continue;
+
+        int row = requestsTable->rowCount();
+        requestsTable->insertRow(row);
+
+        int requestId = request["requestId"].toInt();
+
+        requestsTable->setItem(row, 0,
+            new QTableWidgetItem(QString::number(requestId)));
+
+        requestsTable->setItem(row, 1,
+            new QTableWidgetItem(request["recipientName"].toString()));
+
+        requestsTable->setItem(row, 2,
+            new QTableWidgetItem(requestedBloodGroup));
+
+        requestsTable->setItem(row, 3,
+            new QTableWidgetItem(requestedCity));
+
+        requestsTable->setItem(row, 4,
+            new QTableWidgetItem(request["units"].toString()));
+
+        requestsTable->setItem(row, 5,
+            new QTableWidgetItem(status));
+
+        requestsTable->setItem(row, 6,
+            new QTableWidgetItem(request["createdAt"].toString()));
+
+        // Accept button
+        QPushButton *acceptButton = new QPushButton("Accept");
+
+        requestsTable->setCellWidget(row, 7, acceptButton);
+
+        connect(acceptButton, &QPushButton::clicked,
+                this, [this, requestId]()
+        {
+            acceptBloodRequest(requestId);
+        });
+    }
+}
+
+
+void DonorDashboard::acceptBloodRequest(int requestId)
+{
+    QMessageBox::StandardButton reply =
+        QMessageBox::question(
+            this,
+            "Accept Blood Request",
+            "Are you sure you want to accept this blood request?"
+        );
+
+    if (reply != QMessageBox::Yes)
+        return;
+
+    DatabaseManager database;
+
+    if (!database.openDatabase())
+    {
+        QMessageBox::warning(
+            this, "Database Error",
+            "Unable to open the database."
+        );
+        return;
+    }
+
+    if (database.acceptBloodRequest(requestId, userId))
+    {
+        QMessageBox::information(
+            this, "Success",
+            "Blood request accepted successfully."
+        );
+
+        loadBloodRequests();
+    }
+    else
+    {
+        QMessageBox::warning(
+            this, "Error",
+            "Could not accept the request.\n" +
+            database.getLastError()
+        );
+    }
+}
+
+
+
 
 void DonorDashboard::refreshInfo()
 {

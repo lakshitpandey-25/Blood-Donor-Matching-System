@@ -10,7 +10,7 @@
 #include "../../models/Donor.h"
 #include "../../models/Recipient.h"
 #include "../../models/Admin.h"
-#include "../../models/Donation.h"   // NEW
+#include "../../models/Donation.h" // NEW
 
 class DatabaseManager
 {
@@ -20,10 +20,10 @@ private:
 
     // ---------- Internal Helpers ----------
     QSqlDatabase database() const;
-    QString hashPassword(const QString& password) const;
+    QString hashPassword(const QString &password) const;
 
-    int insertUser(const User& user);
-    bool updateUserInfo(const User& user);
+    int insertUser(const User &user);
+    bool updateUserInfo(const User &user);
     bool createDefaultAdmin();
 
 public:
@@ -35,40 +35,40 @@ public:
     bool createTables();
     bool isOpen() const;
 
+    bool acceptBloodRequest(int requestId, int donorId);
+
     QString getDatabasePath() const;
     QString getLastError() const;
 
     // ---------- Create ----------
     // Returns the new user ID, or -1 on failure.
-    int addDonor(const Donor& donor);
-    int addRecipient(const Recipient& recipient);
-    int addAdmin(const Admin& admin);
+    int addDonor(const Donor &donor);
+    int addRecipient(const Recipient &recipient);
+    int addAdmin(const Admin &admin);
 
     // Returns the new blood request ID, or -1 on failure.
     int addBloodRequest(
         int recipientId,
-        const QString& bloodGroup,
-        const QString& city,
-        int units
-    );
+        const QString &bloodGroup,
+        const QString &city,
+        int units);
 
     // Validates age, date and 90-day cooldown, then saves the donation.
     // Returns the new donationId, or -1 on failure (reason in error).
-    int addDonation(Donation& donation, QString& error);   // NEW
+    int addDonation(Donation &donation, QString &error); // NEW
 
     // ---------- Read ----------
-    bool emailExists(const QString& email) const;
+    bool emailExists(const QString &email) const;
 
     // On success:
     // - role is filled with the user's role
     // - userId is filled with the user's ID
     // - returns true
     bool authenticateUser(
-        const QString& email,
-        const QString& password,
-        QString& role,
-        int& userId
-    ) const;
+        const QString &email,
+        const QString &password,
+        QString &role,
+        int &userId) const;
 
     QString getUserRole(int userId) const;
 
@@ -92,35 +92,31 @@ public:
     // createdAt
     QList<QVariantMap> getAllBloodRequests() const;
 
-    QList<Donation> getDonationsByDonor(int donorId) const;   // NEW
+    QList<Donation> getDonationsByDonor(int donorId) const; // NEW
 
-    int countUsersByRole(const QString& role) const;
+    int countUsersByRole(const QString &role) const;
 
     // If status is empty, returns total number of requests.
     // Otherwise, returns requests having the given status.
     int countBloodRequests(
-        const QString& status = QString()
-    ) const;
+        const QString &status = QString()) const;
 
     // ---------- Update ----------
-    bool updateDonor(const Donor& donor);
-    bool updateRecipient(const Recipient& recipient);
-    bool updateAdmin(const Admin& admin);
+    bool updateDonor(const Donor &donor);
+    bool updateRecipient(const Recipient &recipient);
+    bool updateAdmin(const Admin &admin);
 
     bool updatePassword(
         int userId,
-        const QString& newPassword
-    );
+        const QString &newPassword);
 
     bool updateDonorEligibility(
         int userId,
-        bool eligible
-    );
+        bool eligible);
 
     bool updateBloodRequestStatus(
         int requestId,
-        const QString& status
-    );
+        const QString &status);
 
     // ---------- Delete ----------
     bool deleteUser(int userId);

@@ -19,6 +19,7 @@ private:
     QLineEdit* unitsInput;
     QLabel* messageLabel;
     QTableWidget* requestsTable;
+    QTableWidget* acceptedTable;
 
     int recipientId;
 

@@ -1,3 +1,4 @@
+
 #ifndef DONORDASHBOARD_H
 #define DONORDASHBOARD_H
 
@@ -11,27 +12,29 @@ class QTableWidget;
 
 class DonorDashboard : public QWidget
 {
-    Q_OBJECT
-
 public:
-    DonorDashboard(int userId);
-
-private slots:
-    void addDonation();
-    void exportCsv();
+    explicit DonorDashboard(int userId);
 
 private:
     int userId;
 
     QLabel* infoLabel;
+
     QLineEdit* hospitalEdit;
     QDateEdit* dateEdit;
+
     QTableWidget* historyTable;
+    QTableWidget* requestsTable;
 
     DonationHistory history;
 
     void refreshInfo();
     void loadHistory();
+    void loadBloodRequests();
+
+    void addDonation();
+    void exportCsv();
+    void acceptBloodRequest(int requestId);
 };
 
 #endif
